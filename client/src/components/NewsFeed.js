@@ -1,8 +1,8 @@
-// src/components/NewsFeed.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import LoadingSpinner from './LoadingSpinner';
 
 const FeedContainer = styled.div`
   display: grid;
@@ -11,53 +11,87 @@ const FeedContainer = styled.div`
 `;
 
 const ArticleCard = styled(motion.div)`
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: ${({ theme }) => theme.cardBackground};
+  color: ${({ theme }) => theme.textColor};
+  border-radius: 12px;
+  box-shadow: ${({ theme }) => theme.cardShadow};
   padding: 20px;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const ArticleTitle = styled.h2`
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 10px;
+  color: ${({ theme }) => theme.primaryColor};
 `;
 
 const ArticleDescription = styled.p`
-  font-size: 14px;
-  color: #666;
+  font-size: 16px;
+  color: ${({ theme }) => theme.textColor};
+  opacity: 0.8;
   flex-grow: 1;
+  line-height: 1.5;
 `;
 
 const ArticleLink = styled.a`
-  color: #007bff;
+  color: ${({ theme }) => theme.primaryColor};
   text-decoration: none;
-  margin-top: 10px;
+  margin-top: 15px;
+  font-weight: bold;
+  transition: color 0.3s ease;
+
   &:hover {
-    text-decoration: underline;
+    color: ${({ theme }) => theme.secondaryColor};
   }
 `;
 
 const SentimentIndicator = styled.span`
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: bold;
   color: #fff;
-  margin-top: 10px;
+  margin-top: 15px;
   background-color: ${props => {
-    if (props.sentiment > 0.05) return '#4caf50';
-    if (props.sentiment < -0.05) return '#f44336';
-    return '#ffeb3b';
+    if (props.sentiment > 0.05) return props.theme.secondaryColor;
+    if (props.sentiment < -0.05) return '#e41c1c';
+    return '#f7b731';
   }};
+`;
+
+const SearchContainer = styled.div`
+  margin-bottom: 30px;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 18px;
+  border: 2px solid ${({ theme }) => theme.primaryColor};
+  border-radius: 25px;
+  background-color: ${({ theme }) => theme.cardBackground};
+  color: ${({ theme }) => theme.textColor};
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px ${({ theme }) => `${theme.primaryColor}40`};
+  }
 `;
 
 function NewsFeed() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchArticles();
@@ -76,30 +110,51 @@ function NewsFeed() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const filteredArticles = articles.filter(article =>
+    article.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getSentimentLabel = (sentiment) => {
+    if (sentiment > 0.05) return 'Positive';
+    if (sentiment < -0.05) return 'Negative';
+    return 'Neutral';
+  };
+
+  if (loading) return <LoadingSpinner />;
   if (error) return <div>{error}</div>;
 
   return (
     <div>
       <h1>Latest News</h1>
+      <SearchContainer>
+        <SearchInput
+          type="text"
+          placeholder="Search articles..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </SearchContainer>
       <FeedContainer>
-        {articles.map((article, index) => (
-          <ArticleCard
-            key={index}
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
-            <ArticleTitle>{article.title}</ArticleTitle>
-            <ArticleDescription>{article.description}</ArticleDescription>
-            <ArticleLink href={article.url} target="_blank" rel="noopener noreferrer">
-              Read more
-            </ArticleLink>
-            <SentimentIndicator sentiment={article.sentiment}>
-              {article.sentiment > 0.05 ? 'Positive' : article.sentiment < -0.05 ? 'Negative' : 'Neutral'}
-            </SentimentIndicator>
-          </ArticleCard>
-        ))}
+        <AnimatePresence>
+          {filteredArticles.map((article, index) => (
+            <ArticleCard
+              key={index}
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <ArticleTitle>{article.title}</ArticleTitle>
+              <ArticleDescription>{article.description}</ArticleDescription>
+              <ArticleLink href={article.url} target="_blank" rel="noopener noreferrer">
+                Read more
+              </ArticleLink>
+              <SentimentIndicator sentiment={article.sentiment}>
+                {getSentimentLabel(article.sentiment)}
+              </SentimentIndicator>
+            </ArticleCard>
+          ))}
+        </AnimatePresence>
       </FeedContainer>
     </div>
   );

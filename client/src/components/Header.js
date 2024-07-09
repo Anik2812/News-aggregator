@@ -7,11 +7,13 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 20px 0;
+  color: ${({ theme }) => theme.textColor};
 `;
 
 const Logo = styled.h1`
   font-size: 24px;
   margin: 0;
+  color: ${({ theme }) => theme.textColor};
 `;
 
 const Nav = styled.nav`
@@ -28,12 +30,13 @@ const Nav = styled.nav`
 
   a {
     text-decoration: none;
-    color: #333;
+    color: ${({ theme }) => theme.textColor};
     &:hover {
       color: #007bff;
     }
   }
 `;
+
 
 function Header() {
   return (
