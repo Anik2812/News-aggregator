@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { FaNewspaper, FaChartLine } from 'react-icons/fa';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -13,7 +14,10 @@ const HeaderContainer = styled.header`
 const Logo = styled.h1`
   font-size: 24px;
   margin: 0;
-  color: ${({ theme }) => theme.textColor};
+  color: ${({ theme }) => theme.primaryColor};
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 const Nav = styled.nav`
@@ -31,21 +35,38 @@ const Nav = styled.nav`
   a {
     text-decoration: none;
     color: ${({ theme }) => theme.textColor};
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.3s ease;
+
     &:hover {
-      color: #007bff;
+      color: ${({ theme }) => theme.primaryColor};
     }
   }
 `;
 
-
 function Header() {
   return (
     <HeaderContainer>
-      <Logo>AI News Aggregator</Logo>
+      <Logo>
+        <FaNewspaper />
+        AI News Aggregator
+      </Logo>
       <Nav>
         <ul>
-          <li><Link to="/">Home</Link></li>
-          <li><Link to="/trending">Trending Topics</Link></li>
+          <li>
+            <Link to="/">
+              <FaNewspaper />
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link to="/trending">
+              <FaChartLine />
+              Trending Topics
+            </Link>
+          </li>
         </ul>
       </Nav>
     </HeaderContainer>

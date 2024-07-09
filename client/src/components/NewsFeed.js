@@ -3,6 +3,13 @@ import axios from 'axios';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
+import { FaSearch, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
+
+const getSentimentColor = (sentiment, theme) => {
+  if (sentiment > 0.05) return theme.secondaryColor;
+  if (sentiment < -0.05) return '#e41c1c';
+  return '#f7b731';
+};
 
 const FeedContainer = styled.div`
   display: grid;
@@ -60,19 +67,18 @@ const SentimentIndicator = styled.span`
   font-weight: bold;
   color: #fff;
   margin-top: 15px;
-  background-color: ${props => {
-    if (props.sentiment > 0.05) return props.theme.secondaryColor;
-    if (props.sentiment < -0.05) return '#e41c1c';
-    return '#f7b731';
-  }};
+  background-color: ${props => getSentimentColor(props.$sentiment, props.theme)};
 `;
 
 const SearchContainer = styled.div`
   margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 
 const SearchInput = styled.input`
-  width: 100%;
+  flex-grow: 1;
   padding: 12px 20px;
   font-size: 18px;
   border: 2px solid ${({ theme }) => theme.primaryColor};
@@ -87,20 +93,56 @@ const SearchInput = styled.input`
   }
 `;
 
+const IconButton = styled.button`
+  background-color: ${({ theme }) => theme.primaryColor};
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.secondaryColor};
+  }
+`;
+
+const FilterContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const Select = styled.select`
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 2px solid ${({ theme }) => theme.primaryColor};
+  background-color: ${({ theme }) => theme.cardBackground};
+  color: ${({ theme }) => theme.textColor};
+  font-size: 16px;
+  cursor: pointer;
+`;
+
 function NewsFeed() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
     fetchArticles();
-  }, []);
+  }, [selectedCategory]);
 
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/articles');
+      const response = await axios.get(`http://localhost:5000/api/articles?category=${selectedCategory}`);
       setArticles(response.data);
       setLoading(false);
     } catch (error) {
@@ -110,9 +152,17 @@ function NewsFeed() {
     }
   };
 
-  const filteredArticles = articles.filter(article =>
-    article.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredArticles = articles
+    .filter(article =>
+      article.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return new Date(b.publishedAt) - new Date(a.publishedAt);
+      } else {
+        return new Date(a.publishedAt) - new Date(b.publishedAt);
+      }
+    });
 
   const getSentimentLabel = (sentiment) => {
     if (sentiment > 0.05) return 'Positive';
@@ -120,12 +170,9 @@ function NewsFeed() {
     return 'Neutral';
   };
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div>{error}</div>;
-
   return (
     <div>
-      <h1>Latest News</h1>
+      <h1 className="page-title">Latest News</h1>
       <SearchContainer>
         <SearchInput
           type="text"
@@ -133,7 +180,25 @@ function NewsFeed() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <IconButton>
+          <FaSearch />
+        </IconButton>
       </SearchContainer>
+      <FilterContainer>
+        <Select 
+          value={selectedCategory} 
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="all">All Categories</option>
+          <option value="technology">Technology</option>
+          <option value="politics">Politics</option>
+          <option value="sports">Sports</option>
+          <option value="entertainment">Entertainment</option>
+        </Select>
+        <IconButton onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}>
+          {sortOrder === 'newest' ? <FaSortAmountDown /> : <FaSortAmountUp />}
+        </IconButton>
+      </FilterContainer>
       <FeedContainer>
         <AnimatePresence>
           {filteredArticles.map((article, index) => (
@@ -149,7 +214,7 @@ function NewsFeed() {
               <ArticleLink href={article.url} target="_blank" rel="noopener noreferrer">
                 Read more
               </ArticleLink>
-              <SentimentIndicator sentiment={article.sentiment}>
+              <SentimentIndicator $sentiment={article.sentiment}>
                 {getSentimentLabel(article.sentiment)}
               </SentimentIndicator>
             </ArticleCard>

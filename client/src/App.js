@@ -6,6 +6,7 @@ import NewsFeed from './components/NewsFeed';
 import TrendingTopics from './components/TrendingTopics';
 import Footer from './components/Footer';
 import ThemeToggle from './components/ThemeToggle';
+import './App.css';
 
 const GlobalStyle = createGlobalStyle`
   body {
